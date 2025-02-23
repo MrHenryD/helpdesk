@@ -3,7 +3,7 @@ services:
   app:
     build:
       context: ./
-      dockerfile: ./docker/Dockerfile.local
+      dockerfile: ./docker/Dockerfile
     command: ["debug"]
     volumes:
       - ./src:/opt/helpdesk
@@ -20,7 +20,7 @@ services:
   migrate:
     build:
       context: ./
-      dockerfile: ./docker/Dockerfile.local
+      dockerfile: ./docker/Dockerfile
     command: ["migrate"]
     volumes:
       - ./src:/opt/helpdesk

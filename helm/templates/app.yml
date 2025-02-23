@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: helpdesk
+# Kubernetes Deployment is a higher-level abstraction in Kubernetes that manages the deployment, scaling, and updating of applications 
+# Features: Manage Pods, Rolling Updates, Scaling, Self-Healing, Declarative Configuration
+spec:
+  # Number of desired instances
+  replicas: {{ .Values.app.replicaCount }}
+  # Selector to match the Pods created by this Deployment
+  selector:
+    matchLabels:
+      app: helpdesk
+  # Template for the Pods created by this Deployment
+  template:
+    metadata:
+      labels:
+        app: helpdesk
+    # Pod specification
+    spec:
+      # Init Containers run before the main container starts
+      # NOTE: initContainers will run for each replica
+      # initContainers:
+      #   - name: migrate
+      #     image: helpdesk:1.0.0
+      #     args: ["migrate"]
+      #     env:
+      #       - name: DATABASE_URI
+      #         value: "postgresql://postgres:postgres@postgres/foo"
+
+      # Containers in the Pod
+      containers:
+        # Database container
+        - name: helpdesk
+          image: {{ .Values.app.image.repository }}:{{ .Values.app.image.tag }} # Custom image
+          # Container command
+          # command: ["sh", "entrypoint.sh"]
+          args: ["start"]        
+          # Ports to expose
+          ports:
+            - containerPort: 8000
+          # Environment variables
+          env:
+            - name: DATABASE_URI
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: uri
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: app
+                  key: LOG_LEVEL
+            - name: DEPLOYMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: app
+                  key: DEPLOYMENT
+          # Resource minimum and maximum limits
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+
+---
+# Kubernetes Service acts as a stable endpoint and defines how to access a set of pods
+# Service Types:
+  # NodePort: Exposes the Service on each Node's IP at a static port
+  # LoadBalancer: Exposes the Service externally using a cloud provider's load balancer
+  # ClusterIP: Exposes the Service on a cluster-internal IP
+
+# Port forwarding: kubectl port-forward service/helpdesk 8000:8000 -n helpdesk
+apiVersion: v1
+kind: Service
+metadata:
+  name: helpdesk
+spec:
+  # Selects the Pods to expose
+  selector:
+    app: helpdesk
+  ports:
+    - protocol: TCP
+      # Port exposed by the Service
+      port: 8000
+      # Port on the Pod
+      targetPort: 8000
+  type: ClusterIP

@@ -1,0 +1,6 @@
+# Used to organize and manage resources within a cluster
+# Resource isolation, access control, environment scoping, resource quotas
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: helpdesk

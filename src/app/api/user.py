@@ -2,10 +2,8 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-
 
 import models
 import schemas
@@ -51,10 +49,11 @@ async def delete_user(user_id: uuid.UUID, db: Session = Depends(get_db)):
 
 @router.get("/{user_id}", response_model=schemas.UserRead)
 async def read_user(user_id: uuid.UUID, db: Session = Depends(get_db)):
-    user = _query_users(db, user_id=user_id).first()
-    if user is None:
+    q = _query_users(db, user_id=user_id)
+    row = (await db.execute(q)).scalar_one_or_none()
+    if not row:
         raise HTTPException(status_code=404, detail="User not found")
-    return schemas.UserRead.model_validate(user)
+    return schemas.UserRead.model_validate(row)
 
 
 @router.get("/", response_model=list[schemas.UserRead])

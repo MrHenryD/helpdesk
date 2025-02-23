@@ -31,3 +31,15 @@ run-local: cleanup
 
 cleanup:
 	docker-compose down
+
+helm-lint:
+	helm lint helm/
+
+helm-dryrun:
+	helm install helpdesk helm/ --dry-run --debug
+
+port-forward-app:
+	kubectl port-forward service/helpdesk 8000:8000
+
+restart-app:
+	kubectl rollout restart deployment/helpdesk

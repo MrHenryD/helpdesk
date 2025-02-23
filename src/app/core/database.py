@@ -10,7 +10,6 @@ from sqlalchemy.schema import MetaData
 
 from core.settings import settings
 
-
 async_engine: AsyncEngine = create_async_engine(
     settings.DATABASE_URI.replace("postgresql", "postgresql+asyncpg"),
     future=True,

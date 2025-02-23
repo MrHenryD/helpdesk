@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrate
+# Used to execute a task in a Pod.
+# Alternatively, we can use initContainers to run tasks before the main container starts.
+# kubectl get jobs -n helpdesk
+# kubectl logs job/migrate -n helpdesk
+spec:
+  # Used to cleanup the Job after it finishes (seconds)
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      containers:
+        - name: migrate
+          image: helpdesk:1.0.0 # Custom image
+          args: ["migrate"]
+          env:
+            - name: DATABASE_URI
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: uri
+      # Restart policy for the Pod
+      restartPolicy: Never
+  # Number of retries before considering the Job as failed
+  backoffLimit: 4
