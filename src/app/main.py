@@ -6,9 +6,10 @@ from opentelemetry.sdk.trace import TracerProvider
 
 from api import user
 from core import metrics
+from core.logger import setup_logger
 
-# Create a Logger
-logger = logging.getLogger(__name__)
+# Setup Logging
+logger = setup_logger(__name__)
 
 # Create a Tracer
 provider = TracerProvider()
@@ -22,13 +23,13 @@ app.include_router(user.router, prefix="/user")
 
 @app.get("/health")
 def healthcheck():
-    logger.info("This is good, status remains healthy")
+    logging.info("This is good, status remains healthy")
     return {"status": "healthy"}
 
 
 @app.get("/400")
 def generate_400_error():
-    logger.error("This is bad, a 400 Error!")
+    logging.error("This is bad, a 400 Error!")
     raise HTTPException(
         status_code=400,
         detail="400 Error",

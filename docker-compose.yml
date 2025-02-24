@@ -9,6 +9,7 @@ services:
     volumes:
       - ./src:/opt/helpdesk
       - ./docker/entrypoint.sh:/opt/helpdesk/entrypoint.sh:ro
+      - ./configuration/helpdesk/logs:/mnt/logs
     ports:
       - 8081:8000
     environment:
@@ -21,6 +22,9 @@ services:
       # - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces # HTTP endpoint for traces
       # Database
       - DATABASE_URI=postgresql://postgres:postgres@db/foo
+      # Logging
+      - LOG_LEVEL=DEBUG
+      - LOG_DIRECTORY=/mnt/logs
       - TEST=1
     depends_on:
       migrate:
@@ -63,7 +67,7 @@ services:
     ports:
       - "9090:9090"  # Expose Prometheus web UI on port 9090
     volumes:
-      - ./prometheus/config.yml:/etc/prometheus/prometheus.yml:ro
+      - ./configuration/prometheus/config.yml:/etc/prometheus/prometheus.yml:ro
     command: ["--config.file=/etc/prometheus/prometheus.yml"]
   
   grafana:
@@ -73,11 +77,12 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
-      - ./grafana:/var/lib/grafana
+      - ./configuration/grafana:/var/lib/grafana
     depends_on:
       - prometheus
   
   jaeger:
+    # NOTE: EOL (End of Life) warnings
     image: ${JAEGER_IMAGE:-jaegertracing/all-in-one:latest}
     ports:
       - "16686:16686" # frontend
@@ -87,4 +92,45 @@ services:
       - COLLECTOR_OTLP_ENABLED=true # protocol for transmitting opentelemetry data
     # Supported storages: https://www.jaegertracing.io/docs/2.0/storage/
     volumes:
-      - ./jaeger:/var/lib/jaeger
+      - ./configuration/jaeger:/var/lib/jaeger
+  
+  elasticsearch:
+    # List indexes: http://localhost:9200/_cat/indices?v
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.2
+    environment:
+      - ELASTIC_PASSWORD=elastic
+      - xpack.security.enabled=true
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+    volumes:
+      - ./configuration/elasticsearch:/usr/share/elasticsearch/data
+
+  # NOTE: does not work
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.17.2  # Same version as elasticsearch
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      # via. `scripts/create-es-admin.sh`
+      - ELASTICSEARCH_USERNAME=super
+      - ELASTICSEARCH_PASSWORD=admin123
+    # volumes:
+    #   - ./configuration/kibana:/usr/share/kibana
+    depends_on:
+      - elasticsearch
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.17.2  # Same version as elasticsearch
+    volumes:
+      - ./configuration/helpdesk/logs:/usr/share/filebeat/logs
+    environment:
+      - setup.kibana.host=kibana:5601
+      - output.elasticsearch.hosts=["elasticsearch:9200"]
+      # via. `scripts/create-es-admin.sh`
+      - output.elasticsearch.username=super
+      - output.elasticsearch.password=admin123
+    depends_on:
+      - elasticsearch
+      - kibana

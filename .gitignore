@@ -175,5 +175,9 @@ cython_debug/
 .ruff_cache
 
 # Docker Mounts
-grafana/*
-jaeger/*
+configuration/elasticsearch/*
+configuration/filebeat/*
+configuration/grafana/*
+configuration/helpdesk/*
+configuration/jaeger/*
+configuration/prometheus/*
