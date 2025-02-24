@@ -16,12 +16,14 @@ autogenerate_migrations() {
 # Function to start the FastAPI application
 debug_app() {
     echo "Starting FastAPI application..."
-    exec poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    exec poetry run opentelemetry-instrument \
+         uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 }
 
 start_app() {
     echo "Starting FastAPI application..."
-    exec poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000
+    exec poetry run opentelemetry-instrument \
+         uvicorn app.main:app --host 0.0.0.0 --port 8000
 }
 
 # Function to run tests

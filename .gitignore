@@ -173,3 +173,7 @@ cython_debug/
 
 # Ruff
 .ruff_cache
+
+# Docker Mounts
+grafana/*
+jaeger/*

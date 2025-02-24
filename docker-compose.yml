@@ -4,19 +4,30 @@ services:
     build:
       context: ./
       dockerfile: ./docker/Dockerfile
-    command: ["debug"]
+    # command: ["debug"] # Breaks open telemetry
+    command: ["start"]
     volumes:
       - ./src:/opt/helpdesk
       - ./docker/entrypoint.sh:/opt/helpdesk/entrypoint.sh:ro
     ports:
       - 8081:8000
     environment:
+      # OpenTelemetry
+      # https://opentelemetry.io/docs/languages/sdk-configuration/general/
+      - OTEL_SERVICE_NAME=helpdesk-api
+      - OTEL_TRACES_EXPORTER=console,otlp # Export traces to console and otlp
+      - OTEL_METRICS_EXPORTER=console
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317/v1/traces # gRPC endpoint for traces
+      # - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces # HTTP endpoint for traces
+      # Database
       - DATABASE_URI=postgresql://postgres:postgres@db/foo
       - TEST=1
     depends_on:
       migrate:
         condition: service_completed_successfully
-  
+      jaeger:
+        condition: service_started
+
   migrate:
     build:
       context: ./
@@ -46,3 +57,34 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=foo
+
+  prometheus:
+    image: ${PROMETHEUS_IMAGE:-prom/prometheus:latest}
+    ports:
+      - "9090:9090"  # Expose Prometheus web UI on port 9090
+    volumes:
+      - ./prometheus/config.yml:/etc/prometheus/prometheus.yml:ro
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+  
+  grafana:
+    image: ${GRAFANA_IMAGE:-grafana/grafana:latest}
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana:/var/lib/grafana
+    depends_on:
+      - prometheus
+  
+  jaeger:
+    image: ${JAEGER_IMAGE:-jaegertracing/all-in-one:latest}
+    ports:
+      - "16686:16686" # frontend
+      - "14268:14268" # http collector
+    environment:
+      - COLLECTOR_ZIPKIN_HTTP_PORT=9411 # port for zipkin (distributed tracking system)
+      - COLLECTOR_OTLP_ENABLED=true # protocol for transmitting opentelemetry data
+    # Supported storages: https://www.jaegertracing.io/docs/2.0/storage/
+    volumes:
+      - ./jaeger:/var/lib/jaeger
