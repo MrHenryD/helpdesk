@@ -20,9 +20,11 @@ jobs:
           
       - name: Install dependencies
         run: |
+          cd src/
           pip install --no-cache-dir poetry
           poetry install --no-root
 
       - name: Run pytest
         run: |
-          PYTHONPATH=src/app pytest -s -v
+          cd src/
+          PYTHONPATH=src/app poetry run pytest -s -v
