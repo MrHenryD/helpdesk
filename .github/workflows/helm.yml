@@ -7,7 +7,8 @@ on:
       - '*'
     paths:
       - 'chart/**'
-      - 'actions/helm-lint/**'
+      - '.github/workflows/helm.yml'
+      - '.github/actions/helm-lint/**'
 
 jobs:
   helm-lint:
