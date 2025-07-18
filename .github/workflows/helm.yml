@@ -7,6 +7,7 @@ on:
       - '*'
     paths:
       - 'chart/**'
+      - 'actions/helm-lint/**'
 
 jobs:
   helm-lint:

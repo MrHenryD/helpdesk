@@ -24,3 +24,4 @@ jobs:
           poetry-path: 'src/'
           python-version: '3.11'
           poetry-version: '2.1.0'
+

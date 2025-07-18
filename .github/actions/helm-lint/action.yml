@@ -16,3 +16,5 @@ runs:
     - name: Lint Helm charts
       run: |
         helm lint ${{ inputs.chart-path }}
+      shell: bash
+
