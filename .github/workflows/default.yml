@@ -1,6 +1,11 @@
 name: CI
+description: Default workflow for the project
 
 on:
+  push:
+    branches:
+      - main
+  
   pull_request:
     branches:
       - '*'
@@ -12,14 +17,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
-      - name: Set up Python 3.x
-        uses: actions/setup-python@v4
+      
+      - name: Set up Poetry
+        uses: ./.github/actions/poetry-setup
         with:
+          poetry-path: 'src/'
           python-version: '3.11'
-          
-      - name: Install dependencies
-        run: |
-          cd src/
-          pip install --no-cache-dir poetry
-          poetry install --no-root
+          poetry-version: '2.1.0'

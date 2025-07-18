@@ -1,0 +1,22 @@
+name: Helm Lint
+description: Lint Helm charts if the chart directory has changed
+
+on:
+  push:
+    branches:
+      - '*'
+    paths:
+      - 'chart/**'
+
+jobs:
+  helm-lint:
+    name: Helm Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Run Helm Lint
+        uses: ./.github/actions/helm-lint
+        with:
+          chart-path: 'chart/
