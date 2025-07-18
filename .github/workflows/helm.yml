@@ -19,4 +19,4 @@ jobs:
       - name: Run Helm Lint
         uses: ./.github/actions/helm-lint
         with:
-          chart-path: 'chart/
+          chart-path: 'chart/'
