@@ -1,0 +1,10 @@
+global:
+  scrape_interval: 30s  # Set the interval for scraping targets
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+  - job_name: "helpdesk-api"
+    static_configs:
+      - targets: ["app:8000"]

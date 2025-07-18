@@ -1,0 +1,18 @@
+# Persistent Volume (PV) is a cluster-wide resource and decouples storage from the life cycle of a pod.
+# If there are corrupted data, it may be stored within the cluster
+# docker ps; docker exec -it <container_id> bash; rm -rf /mnt/*
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: helpdesk-pv
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: standard
+  hostPath:
+    path: /mnt/helpdesk

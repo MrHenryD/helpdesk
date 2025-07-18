@@ -1,0 +1,117 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: database-pvc
+# Persistent Volume Claim (PVC) is a request for storage by a user. Once a PVC is created, Kubernetes will attempt to find a matching PV based on the specified size, access mode, and storage class
+# Remains in pending state until a container is bound to it
+# PVCs are namespace scoped
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+# Kubernetes Deployment is a higher-level abstraction in Kubernetes that manages the deployment, scaling, and updating of applications 
+# Features: Manage Pods, Rolling Updates, Scaling, Self-Healing, Declarative Configuration
+spec:
+  # Number of desired instances
+  replicas: 1
+  # Selector to match the Pods created by this Deployment
+  selector:
+    matchLabels:
+      app: postgres
+  # Template for the Pods created by this Deployment
+  template:
+    metadata:
+      labels:
+        app: postgres
+    # Pod specification
+    spec:
+      # Containers in the Pod
+      containers:
+        # Database container
+        - name: postgres
+          image: postgres:17.3
+          # Ports to expose
+          ports:
+            - containerPort: 5432
+          # Environment variables
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database
+                  key: password
+            - name: POSTGRES_DB
+              value: "foo"
+          # Volume mounts
+          volumeMounts:
+            - name: postgres-mount
+              mountPath: /var/lib/postgresql/data
+          # Resource minimum and maximum limits
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2"
+          # Liveness: checks container is running
+          # livenessProbe:
+          #   exec:
+          #     command:
+          #       - pg_isready
+          #       - -U
+          #       - postgres
+          #   initialDelaySeconds: 30
+          #   periodSeconds: 10
+          # Readiness: checks container is ready to serve traffic
+          # readinessProbe:
+          #   exec:
+          #     command:
+          #       - pg_isready
+          #       - -U
+          #       - postgres
+          #   initialDelaySeconds: 5
+          #   periodSeconds: 10
+      # Volumes
+      volumes:
+        - name: postgres-mount
+          persistentVolumeClaim:
+            claimName: database-pvc
+
+---
+# Kubernetes Service acts as a stable endpoint and defines how to access a set of pods
+# Service Types:
+  # NodePort: Exposes the Service on each Node's IP at a static port
+  # LoadBalancer: Exposes the Service externally using a cloud provider's load balancer
+  # ClusterIP: Exposes the Service on a cluster-internal IP
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  # Selects the Pods to expose
+  selector:
+    app: postgres
+  ports:
+    - protocol: TCP
+      # Port exposed by the Service
+      port: 5432
+      # Port on the Pod
+      targetPort: 5432
+  type: ClusterIP
