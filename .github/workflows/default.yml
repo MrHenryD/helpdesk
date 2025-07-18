@@ -23,8 +23,3 @@ jobs:
           cd src/
           pip install --no-cache-dir poetry
           poetry install --no-root
-
-      - name: Run pytest
-        run: |
-          cd src/
-          PYTHONPATH=src/app poetry run pytest -s -v

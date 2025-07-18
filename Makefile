@@ -1,8 +1,10 @@
 PYTHON_VERSION=3.11.9
-PYTHONPATH=src
-POETRY=src
+PYTHON_PATH=app
+POETRY_DIR=src
 
 fmt_dir := src
+
+PHONY: all
 
 activate:
 	pyenv local $(PYTHON_VERSION)
@@ -14,17 +16,17 @@ add-dev-dep:
 	poetry add $(PACKAGE) --dev
 
 style: activate
-	poetry -C $(POETRY) run ruff check --select I --fix .
-	poetry -C $(POETRY) run ruff format .
+	poetry -C $(POETRY_DIR) run ruff check --select I --fix .
+	poetry -C $(POETRY_DIR) run ruff format .
 
 lint: activate
-	poetry -C $(POETRY) run ruff check .
+	poetry -C $(POETRY_DIR) run ruff check .
 
 test:
-	poetry -C $(POETRY) run pytest
+	PYTHONPATH=$(PYTHON_PATH) poetry -C $(POETRY_DIR) run pytest
 
 migration:
-	poetry -C $(POETRY) run alembic init migrations
+	poetry -C $(POETRY_DIR) run alembic init migrations
 
 run-local: cleanup
 	docker-compose up --build
